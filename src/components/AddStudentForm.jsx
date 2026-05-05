@@ -1,6 +1,10 @@
 import React, { useState } from 'react';
+import { useDispatch } from 'react-redux';
+import { addStudent } from '../features/students/studentSlice';
 
-const AddStudentForm = ({ onAddStudent }) => {
+const AddStudentForm = () => {
+  const dispatch = useDispatch();
+  
   const initialForm = {
     name: '',
     studentId: '',
@@ -22,7 +26,6 @@ const AddStudentForm = ({ onAddStudent }) => {
   const handleSubmit = (e) => {
     e.preventDefault();
     
-    // Validation
     if (!form.name || !form.studentId || !form.major || !form.gpa) {
       setError('Please fill in all fields.');
       return;
@@ -34,11 +37,12 @@ const AddStudentForm = ({ onAddStudent }) => {
       return;
     }
 
-    onAddStudent({
+    // Dispatch action to Redux
+    dispatch(addStudent({
       ...form,
       gpa: gpaNum,
-      id: Date.now() // Simple unique ID
-    });
+      id: Date.now()
+    }));
 
     setForm(initialForm);
     setError('');

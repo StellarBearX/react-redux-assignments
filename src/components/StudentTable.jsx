@@ -1,6 +1,11 @@
 import React from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { deleteStudent } from '../features/students/studentSlice';
 
-const StudentTable = ({ students, onDelete }) => {
+const StudentTable = () => {
+  const students = useSelector((state) => state.students.students);
+  const dispatch = useDispatch();
+
   return (
     <div className="glass-card" style={{ marginTop: '2rem', overflowX: 'auto' }}>
       <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-main)' }}>Student List</h2>
@@ -42,7 +47,7 @@ const StudentTable = ({ students, onDelete }) => {
               </td>
               <td style={{ padding: '1rem' }}>
                 <button 
-                  onClick={() => onDelete(student.id)}
+                  onClick={() => dispatch(deleteStudent(student.id))}
                   style={{ 
                     background: 'rgba(239, 68, 68, 0.1)', 
                     color: 'var(--danger)',

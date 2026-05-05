@@ -1,6 +1,9 @@
 import React from 'react';
+import { useSelector } from 'react-redux';
 
-const GpaSummary = ({ students }) => {
+const GpaSummary = () => {
+  const students = useSelector((state) => state.students.students);
+  
   const gpas = students.map(s => s.gpa);
   const avg = gpas.length ? (gpas.reduce((a, b) => a + b, 0) / gpas.length).toFixed(2) : '0.00';
   const max = gpas.length ? Math.max(...gpas).toFixed(2) : '0.00';
