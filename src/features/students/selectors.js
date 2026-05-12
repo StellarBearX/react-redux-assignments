@@ -1,27 +1,57 @@
-// src/features/students/selectors.js
-// ── Basic selectors ───────────────────────────────────────
-// Select the full list of students from the store
-export const selectAllStudents = (state) => state.students.list;
+// src/features/students/selectors.js — Session 6 (RTK Query)
+import { createSelector } from '@reduxjs/toolkit';
+import { studentsApi } from './studentsApi';
 
-// Select total count
-export const selectStudentCount = (state) => state.students.list.length;
+// 1. Select the raw result object from the cache
+const selectStudentsResult = studentsApi.endpoints.getStudents.select();
 
-// ── Derived / computed selectors ─────────────────────────
-// Compute average GPA across all students
-export const selectAverageGpa = (state) => {
-  const list = state.students.list;
-  if (list.length === 0) return "0.00";
-  const total = list.reduce((sum, s) => sum + s.gpa, 0);
-  return (total / list.length).toFixed(2);
-};
+// 2. Derive the actual data array (with fallback to empty array)
+const selectStudentsData = createSelector(
+  selectStudentsResult,
+  (result) => result.data ?? []
+);
 
-// Find a single student by id (useful for edit modal)
-export const selectStudentById = (id) => (state) => state.students.list.find((s) => s.id === id);
+// ── Derived selectors (memoized from RTK Query data)
+export const selectAverageGpa = createSelector(
+  selectStudentsData,
+  (students) => {
+    if (students.length === 0) return '-';
+    const sum = students.reduce((acc, s) => acc + Number(s.gpa), 0);
+    return (sum / students.length).toFixed(2);
+  }
+);
 
-// Count students above a GPA threshold
-export const selectHighAchievers = (state) => state.students.list.filter((s) => s.gpa >= 3.5);
+export const selectHighAchievers = createSelector(
+  selectStudentsData,
+  (students) => students.filter((s) => s.gpa >= 3.5)
+);
 
-// ── Async state selectors ────────────────────────────────
-export const selectStudentsStatus = (state) => state.students.status;
-export const selectStudentsError = (state) => state.students.error;
+export const selectStudentCount = createSelector(
+  selectStudentsData,
+  (students) => students.length
+);
 
+export const selectGpaDistribution = createSelector(
+  selectStudentsData,
+  (students) => ({
+    high: students.filter((s) => s.gpa >= 3.5).length,
+    medium: students.filter((s) => s.gpa >= 2.5 && s.gpa < 3.5).length,
+    low: students.filter((s) => s.gpa < 2.5).length,
+  })
+);
+
+export const selectMaxGPA = createSelector(
+  selectStudentsData,
+  (students) => {
+    if (students.length === 0) return 0;
+    return Math.max(...students.map((s) => Number(s.gpa))).toFixed(2);
+  }
+);
+
+export const selectMinGPA = createSelector(
+  selectStudentsData,
+  (students) => {
+    if (students.length === 0) return 0;
+    return Math.min(...students.map((s) => Number(s.gpa))).toFixed(2);
+  }
+);

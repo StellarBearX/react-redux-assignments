@@ -1,8 +1,10 @@
 import { configureStore } from '@reduxjs/toolkit';
-import studentReducer from '../features/students/studentSlice';
+import { studentsApi } from '../features/students/studentsApi';
 
 export const store = configureStore({
   reducer: {
-    students: studentReducer,
+    [studentsApi.reducerPath]: studentsApi.reducer,
   },
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware().concat(studentsApi.middleware),
 });

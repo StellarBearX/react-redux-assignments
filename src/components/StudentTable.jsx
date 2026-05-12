@@ -1,55 +1,56 @@
-// src/components/StudentTable.jsx — Session 4 version
+// src/components/StudentTable.jsx — Session 6 (RTK Query)
 import { useState } from "react";
-import { useSelector, useDispatch } from "react-redux";
-import { 
-  deleteStudentAsync, 
-  updateStudentAsync,
-  fetchStudents 
-} from "../features/students/studentsThunks";
-import { 
-  selectAllStudents, 
-  selectStudentsStatus, 
-  selectStudentsError 
-} from "../features/students/selectors";
+import {
+  useGetStudentsQuery,
+  useDeleteStudentMutation,
+  useUpdateStudentMutation,
+} from "../features/students/studentsApi";
 import EditModal from "./EditModal";
+import StudentRow from "./StudentRow";
 
 function StudentTable() {
-  const dispatch = useDispatch();
-  const allStudents = useSelector(selectAllStudents);
-  const status = useSelector(selectStudentsStatus);
-  const error = useSelector(selectStudentsError);
+  const { data: students = [], isLoading, isError, error, refetch } = useGetStudentsQuery();
+  const [deleteStudent] = useDeleteStudentMutation();
+  const [updateStudent] = useUpdateStudentMutation();
+  const [editing, setEditing] = useState(null);
 
-  // Local UI state — modal open/close and which student is being edited
-  const [editing, setEditing] = useState(null); // null = modal closed
-
-  function handleDelete(id) {
-    if (window.confirm("Delete this student?")) {
-      dispatch(deleteStudentAsync(id));
+  const handleDelete = async (id) => {
+    if (window.confirm("Are you sure you want to delete this student?")) {
+      try {
+        await deleteStudent(id).unwrap();
+      } catch (err) {
+        console.error("Failed to delete student:", err);
+      }
     }
-  }
+  };
 
-  function handleEditSave(updatedData) {
-    dispatch(updateStudentAsync({ ...updatedData, gpa: parseFloat(updatedData.gpa) || 0 }));
-    setEditing(null); // Close modal after update
-  }
+  const handleEditSave = async (student) => {
+    try {
+      await updateStudent({ ...student, gpa: parseFloat(student.gpa) || 0 }).unwrap();
+      setEditing(null);
+    } catch (err) {
+      console.error("Failed to update student:", err);
+    }
+  };
 
-  if (status === 'loading') {
+  if (isLoading) {
     return <div className="spinner" style={{ textAlign: 'center', padding: '2rem' }}>Loading students...</div>;
   }
 
-  if (status === "failed") {
+  if (isError) {
     return (
       <div className="error-banner" style={{ textAlign: 'center', padding: '2rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '12px' }}>
-        <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>Error: {error}</p>
-        <button onClick={() => dispatch(fetchStudents())} className="btn-primary">
+        <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>Error: {error?.status || "Failed to fetch students"}</p>
+        <button onClick={refetch} className="btn-primary">
           Retry
         </button>
       </div>
     );
   }
 
-  // Guard: don't render until data is ready
-  if (status !== "succeeded") return null;
+  if (!students || students.length === 0) {
+    return <p style={{ textAlign: 'center', padding: '2rem' }}>No students found. Add one to the list.</p>;
+  }
 
   return (
     <>
@@ -65,18 +66,14 @@ function StudentTable() {
           </tr>
         </thead>
         <tbody>
-          {allStudents.map((student, index) => (
-            <tr key={student.id} className={student.gpa >= 3.5 ? "high-gpa" : ""}>
-              <td>{index + 1}</td>
-              <td>{student.name}</td>
-              <td>{student.studentId}</td>
-              <td>{student.major}</td>
-              <td className="gpa-cell">{Number(student.gpa).toFixed(2)}</td>
-              <td>
-                <button onClick={() => setEditing(student)}>Edit</button>
-                <button onClick={() => handleDelete(student.id)}>Delete</button>
-              </td>
-            </tr>
+          {students.map((student, index) => (
+            <StudentRow 
+              key={student.id} 
+              student={student} 
+              index={index} 
+              setEditing={setEditing} 
+              handleDelete={handleDelete}
+            />
           ))}
         </tbody>
       </table>
