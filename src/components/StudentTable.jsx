@@ -1,71 +1,66 @@
-import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
-import { deleteStudent } from '../features/students/studentSlice';
+// src/components/StudentTable.jsx — Session 3 version
+import { useState } from "react";
+import { useSelector, useDispatch } from "react-redux";
+import { deleteStudent, updateStudent } from "../features/students/studentSlice";
+import { selectAllStudents } from "../features/students/selectors";
+import EditModal from "./EditModal";
 
-const StudentTable = () => {
-  const students = useSelector((state) => state.students.students);
+function StudentTable() {
   const dispatch = useDispatch();
+  const allStudents = useSelector(selectAllStudents);
+
+  // Local UI state — modal open/close and which student is being edited
+  const [editing, setEditing] = useState(null); // null = modal closed
+
+  function handleDelete(id) {
+    if (window.confirm("Delete this student?")) {
+      dispatch(deleteStudent(id));
+    }
+  }
+
+  function handleEditSave(updatedData) {
+    dispatch(updateStudent({ ...updatedData, gpa: parseFloat(updatedData.gpa) || 0 }));
+    setEditing(null); // Close modal after update
+  }
 
   return (
-    <div className="glass-card" style={{ marginTop: '2rem', overflowX: 'auto' }}>
-      <h2 style={{ marginBottom: '1.5rem', color: 'var(--text-main)' }}>Student List</h2>
-      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+    <>
+      <table className="student-table">
         <thead>
-          <tr style={{ borderBottom: '1px solid var(--glass-border)', color: 'var(--text-muted)' }}>
-            <th style={{ padding: '1rem' }}>ID</th>
-            <th style={{ padding: '1rem' }}>Name</th>
-            <th style={{ padding: '1rem' }}>Student ID</th>
-            <th style={{ padding: '1rem' }}>Major</th>
-            <th style={{ padding: '1rem' }}>GPA</th>
-            <th style={{ padding: '1rem' }}>Actions</th>
+          <tr>
+            <th>#</th>
+            <th>Name</th>
+            <th>Student ID</th>
+            <th>Major</th>
+            <th>GPA</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {students.map((student) => (
-            <tr 
-              key={student.id} 
-              style={{ 
-                borderBottom: '1px solid var(--glass-border)',
-                background: student.gpa >= 3.5 ? 'rgba(16, 185, 129, 0.1)' : 'transparent',
-                transition: 'background 0.3s ease'
-              }}
-            >
-              <td style={{ padding: '1rem' }}>{student.id}</td>
-              <td style={{ padding: '1rem', fontWeight: 500 }}>{student.name}</td>
-              <td style={{ padding: '1rem' }}>{student.studentId}</td>
-              <td style={{ padding: '1rem' }}>{student.major}</td>
-              <td style={{ padding: '1rem' }}>
-                <span style={{ 
-                  padding: '4px 12px', 
-                  borderRadius: '20px', 
-                  background: student.gpa >= 3.5 ? 'var(--accent)' : 'rgba(255,255,255,0.1)',
-                  color: student.gpa >= 3.5 ? '#000' : 'var(--text-main)',
-                  fontWeight: 600
-                }}>
-                  {student.gpa.toFixed(2)}
-                </span>
-              </td>
-              <td style={{ padding: '1rem' }}>
-                <button 
-                  onClick={() => dispatch(deleteStudent(student.id))}
-                  style={{ 
-                    background: 'rgba(239, 68, 68, 0.1)', 
-                    color: 'var(--danger)',
-                    padding: '6px 12px',
-                    fontSize: '0.8rem'
-                  }}
-                  onMouseOver={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.2)'}
-                  onMouseOut={(e) => e.currentTarget.style.background = 'rgba(239, 68, 68, 0.1)'}
-                >
-                  Delete
-                </button>
+          {allStudents.map((student, index) => (
+            <tr key={student.id} className={student.gpa >= 3.5 ? "high-gpa" : ""}>
+              <td>{index + 1}</td>
+              <td>{student.name}</td>
+              <td>{student.studentId}</td>
+              <td>{student.major}</td>
+              <td className="gpa-cell">{student.gpa.toFixed(2)}</td>
+              <td>
+                <button onClick={() => setEditing(student)}>Edit</button>
+                <button onClick={() => handleDelete(student.id)}>Delete</button>
               </td>
             </tr>
           ))}
         </tbody>
       </table>
-    </div>
+      {editing && (
+        <EditModal
+          student={editing}
+          onSave={handleEditSave}
+          onCancel={() => setEditing(null)}
+        />
+      )}
+    </>
   );
-};
+}
 
 export default StudentTable;

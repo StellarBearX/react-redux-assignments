@@ -1,30 +1,33 @@
-import React from 'react';
-import { useSelector } from 'react-redux';
+// src/components/GpaSummary.jsx — Session 3 version (no props)
+import { useSelector } from "react-redux";
+import {
+  selectStudentCount,
+  selectAverageGpa,
+  selectHighAchievers,
+} from "../features/students/selectors";
 
-const GpaSummary = () => {
-  const students = useSelector((state) => state.students.students);
-  
-  const gpas = students.map(s => s.gpa);
-  const avg = gpas.length ? (gpas.reduce((a, b) => a + b, 0) / gpas.length).toFixed(2) : '0.00';
-  const max = gpas.length ? Math.max(...gpas).toFixed(2) : '0.00';
-  const min = gpas.length ? Math.min(...gpas).toFixed(2) : '0.00';
-
-  const stats = [
-    { label: 'Average GPA', value: avg, color: 'var(--primary)' },
-    { label: 'Max GPA', value: max, color: 'var(--accent)' },
-    { label: 'Min GPA', value: min, color: 'var(--accent-high)' },
-  ];
+function GpaSummary() {
+  // Each useSelector is independent — only re-renders if its value changes
+  const count = useSelector(selectStudentCount);
+  const avgGpa = useSelector(selectAverageGpa);
+  const highList = useSelector(selectHighAchievers);
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', marginBottom: '2rem' }}>
-      {stats.map((stat, index) => (
-        <div key={index} className="glass-card" style={{ padding: '1.5rem', textAlign: 'center' }}>
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '0.5rem' }}>{stat.label}</p>
-          <h3 style={{ fontSize: '2rem', color: stat.color }}>{stat.value}</h3>
-        </div>
-      ))}
+    <div className="gpa-summary">
+      <div className="stat-card">
+        <span className="stat-value">{count}</span>
+        <span className="stat-label">Total Students</span>
+      </div>
+      <div className="stat-card">
+        <span className="stat-value">{avgGpa}</span>
+        <span className="stat-label">Average GPA</span>
+      </div>
+      <div className="stat-card">
+        <span className="stat-value">{highList.length}</span>
+        <span className="stat-label">High Achievers (≥3.5)</span>
+      </div>
     </div>
   );
-};
+}
 
 export default GpaSummary;

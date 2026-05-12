@@ -1,7 +1,7 @@
 import { createSlice } from '@reduxjs/toolkit';
 
 const initialState = {
-  students: [
+  list: [
     { id: 1, name: 'Somchai Rakpong', studentId: '6501001', major: 'Computer Science', gpa: 3.85 },
     { id: 2, name: 'Naree Thongdee', studentId: '6501002', major: 'Information Technology', gpa: 3.60 },
     { id: 3, name: 'Kitti Somsri', studentId: '6501003', major: 'Software Engineering', gpa: 3.25 },
@@ -15,14 +15,19 @@ const studentSlice = createSlice({
   initialState,
   reducers: {
     addStudent: (state, action) => {
-      // Immer allows us to "mutate" the state safely
-      state.students.push(action.payload);
+      state.list.push(action.payload);
     },
     deleteStudent: (state, action) => {
-      state.students = state.students.filter(student => student.id !== action.payload);
+      state.list = state.list.filter(student => student.id !== action.payload);
+    },
+    updateStudent: (state, action) => {
+      const index = state.list.findIndex(s => s.id === action.payload.id);
+      if (index !== -1) {
+        state.list[index] = action.payload;
+      }
     },
   },
 });
 
-export const { addStudent, deleteStudent } = studentSlice.actions;
+export const { addStudent, deleteStudent, updateStudent } = studentSlice.actions;
 export default studentSlice.reducer;

@@ -1,120 +1,69 @@
-import React, { useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { addStudent } from '../features/students/studentSlice';
+// src/components/AddStudentForm.jsx — Session 3
+import { useState } from "react";
+import { useDispatch } from "react-redux";
+import { addStudent } from "../features/students/studentSlice";
 
-const AddStudentForm = () => {
+const EMPTY_FORM = { name: "", studentId: "", major: "", gpa: "" };
+
+function AddStudentForm() {
   const dispatch = useDispatch();
-  
-  const initialForm = {
-    name: '',
-    studentId: '',
-    major: '',
-    gpa: ''
-  };
+  const [form, setForm] = useState(EMPTY_FORM);
+  // eslint-disable-next-line no-unused-vars
+  const [error, setError] = useState("");
 
-  const [form, setForm] = useState(initialForm);
-  const [error, setError] = useState('');
+  // Single handler for ALL inputs via computed property name
+  function handleChange(e) {
+    // setForm({ ...form, [e.target.name]: e.target.value });
+    setForm((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+  }
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm({
-      ...form,
-      [name]: value
-    });
-  };
-
-  const handleSubmit = (e) => {
+  function handleSubmit(e) {
     e.preventDefault();
-    
-    if (!form.name || !form.studentId || !form.major || !form.gpa) {
-      setError('Please fill in all fields.');
-      return;
-    }
-
-    const gpaNum = parseFloat(form.gpa);
-    if (isNaN(gpaNum) || gpaNum < 0 || gpaNum > 4.0) {
-      setError('GPA must be between 0.0 and 4.0');
-      return;
-    }
-
-    // Dispatch action to Redux
-    dispatch(addStudent({
-      ...form,
-      gpa: gpaNum,
-      id: Date.now()
-    }));
-
-    setForm(initialForm);
-    setError('');
-  };
+    dispatch(addStudent({ id: Date.now(), ...form, gpa: parseFloat(form.gpa) || 0 }));
+    setForm(EMPTY_FORM); // Reset form after successful submit
+    setError("");
+  }
 
   return (
-    <div className="glass-card">
-      <h2 style={{ marginBottom: '1.5rem' }}>Add New Student</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem' }}>
-        <div>
-          <label>Full Name</label>
-          <input 
-            type="text" 
-            name="name" 
-            value={form.name} 
-            onChange={handleChange} 
-            placeholder="e.g. John Doe" 
-            style={{ width: '100%' }}
-          />
-        </div>
-        <div>
-          <label>Student ID</label>
-          <input 
-            type="text" 
-            name="studentId" 
-            value={form.studentId} 
-            onChange={handleChange} 
-            placeholder="e.g. 6501001" 
-            style={{ width: '100%' }}
-          />
-        </div>
-        <div>
-          <label>Major</label>
-          <input 
-            type="text" 
-            name="major" 
-            value={form.major} 
-            onChange={handleChange} 
-            placeholder="e.g. Computer Science" 
-            style={{ width: '100%' }}
-          />
-        </div>
-        <div>
-          <label>GPA</label>
-          <input 
-            type="number" 
-            step="0.01" 
-            name="gpa" 
-            value={form.gpa} 
-            onChange={handleChange} 
-            placeholder="0.00 - 4.00" 
-            style={{ width: '100%' }}
-          />
-        </div>
-        <div style={{ gridColumn: '1 / -1', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {error && <p style={{ color: 'var(--danger)', fontSize: '0.9rem' }}>{error}</p>}
-          <button 
-            type="submit" 
-            style={{ 
-              background: 'var(--primary)', 
-              color: 'white',
-              alignSelf: 'flex-start'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.background = 'var(--primary-hover)'}
-            onMouseOut={(e) => e.currentTarget.style.background = 'var(--primary)'}
-          >
-            Add Student
-          </button>
-        </div>
-      </form>
-    </div>
+    <form className="add-form" onSubmit={handleSubmit}>
+      <h3>Add New Student</h3>
+      <div className="form-row">
+        <input
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          placeholder="Full Name"
+          required
+        />
+        <input
+          name="studentId"
+          placeholder="Student ID *"
+          value={form.studentId}
+          onChange={handleChange}
+          required
+        />
+        <input
+          name="major"
+          placeholder="Major"
+          value={form.major}
+          onChange={handleChange}
+        />
+        <input
+          name="gpa"
+          placeholder="GPA (0.0–4.0)"
+          value={form.gpa}
+          onChange={handleChange}
+          type="number"
+          step="0.01"
+          min="0"
+          max="4"
+        />
+        <button type="submit" className="btn-primary">
+          + Add Student
+        </button>
+      </div>
+    </form>
   );
-};
+}
 
 export default AddStudentForm;
