@@ -1,27 +1,55 @@
-// src/components/StudentTable.jsx — Session 3 version
+// src/components/StudentTable.jsx — Session 4 version
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
-import { deleteStudent, updateStudent } from "../features/students/studentSlice";
-import { selectAllStudents } from "../features/students/selectors";
+import { 
+  deleteStudentAsync, 
+  updateStudentAsync,
+  fetchStudents 
+} from "../features/students/studentsThunks";
+import { 
+  selectAllStudents, 
+  selectStudentsStatus, 
+  selectStudentsError 
+} from "../features/students/selectors";
 import EditModal from "./EditModal";
 
 function StudentTable() {
   const dispatch = useDispatch();
   const allStudents = useSelector(selectAllStudents);
+  const status = useSelector(selectStudentsStatus);
+  const error = useSelector(selectStudentsError);
 
   // Local UI state — modal open/close and which student is being edited
   const [editing, setEditing] = useState(null); // null = modal closed
 
   function handleDelete(id) {
     if (window.confirm("Delete this student?")) {
-      dispatch(deleteStudent(id));
+      dispatch(deleteStudentAsync(id));
     }
   }
 
   function handleEditSave(updatedData) {
-    dispatch(updateStudent({ ...updatedData, gpa: parseFloat(updatedData.gpa) || 0 }));
+    dispatch(updateStudentAsync({ ...updatedData, gpa: parseFloat(updatedData.gpa) || 0 }));
     setEditing(null); // Close modal after update
   }
+
+  if (status === 'loading') {
+    return <div className="spinner" style={{ textAlign: 'center', padding: '2rem' }}>Loading students...</div>;
+  }
+
+  if (status === "failed") {
+    return (
+      <div className="error-banner" style={{ textAlign: 'center', padding: '2rem', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '12px' }}>
+        <p style={{ color: 'var(--danger)', marginBottom: '1rem' }}>Error: {error}</p>
+        <button onClick={() => dispatch(fetchStudents())} className="btn-primary">
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  // Guard: don't render until data is ready
+  if (status !== "succeeded") return null;
 
   return (
     <>
@@ -43,7 +71,7 @@ function StudentTable() {
               <td>{student.name}</td>
               <td>{student.studentId}</td>
               <td>{student.major}</td>
-              <td className="gpa-cell">{student.gpa.toFixed(2)}</td>
+              <td className="gpa-cell">{Number(student.gpa).toFixed(2)}</td>
               <td>
                 <button onClick={() => setEditing(student)}>Edit</button>
                 <button onClick={() => handleDelete(student.id)}>Delete</button>

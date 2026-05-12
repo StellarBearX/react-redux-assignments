@@ -20,3 +20,8 @@ export const selectStudentById = (id) => (state) => state.students.list.find((s)
 
 // Count students above a GPA threshold
 export const selectHighAchievers = (state) => state.students.list.filter((s) => s.gpa >= 3.5);
+
+// ── Async state selectors ────────────────────────────────
+export const selectStudentsStatus = (state) => state.students.status;
+export const selectStudentsError = (state) => state.students.error;
+
