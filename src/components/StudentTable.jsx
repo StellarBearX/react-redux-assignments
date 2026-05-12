@@ -1,4 +1,4 @@
-// src/components/StudentTable.jsx — Session 4 version
+// src/components/StudentTable.jsx — Session 5 version
 import { useState } from "react";
 import { useSelector, useDispatch } from "react-redux";
 import { 
@@ -7,26 +7,51 @@ import {
   fetchStudents 
 } from "../features/students/studentsThunks";
 import { 
-  selectAllStudents, 
+  selectStudentById,
+  selectStudentIds,
+} from "../features/students/studentsSlice";
+import { 
   selectStudentsStatus, 
   selectStudentsError 
 } from "../features/students/selectors";
 import EditModal from "./EditModal";
 
+// Sub-component for individual rows — uses O(1) lookup
+function StudentRow({ id, index, onEdit }) {
+  const dispatch = useDispatch();
+  const student = useSelector((state) => selectStudentById(state, id));
+  
+  if (!student) return null;
+
+  function handleDelete() {
+    if (window.confirm(`Delete ${student.name}?`)) {
+      dispatch(deleteStudentAsync(id));
+    }
+  }
+
+  return (
+    <tr className={student.gpa >= 3.5 ? "high-gpa" : ""}>
+      <td>{index + 1}</td>
+      <td>{student.name}</td>
+      <td>{student.studentId}</td>
+      <td>{student.major}</td>
+      <td className="gpa-cell">{Number(student.gpa).toFixed(2)}</td>
+      <td>
+        <button onClick={() => onEdit(student)}>Edit</button>
+        <button onClick={handleDelete}>Delete</button>
+      </td>
+    </tr>
+  );
+}
+
 function StudentTable() {
   const dispatch = useDispatch();
-  const allStudents = useSelector(selectAllStudents);
+  const studentIds = useSelector(selectStudentIds);
   const status = useSelector(selectStudentsStatus);
   const error = useSelector(selectStudentsError);
 
   // Local UI state — modal open/close and which student is being edited
   const [editing, setEditing] = useState(null); // null = modal closed
-
-  function handleDelete(id) {
-    if (window.confirm("Delete this student?")) {
-      dispatch(deleteStudentAsync(id));
-    }
-  }
 
   function handleEditSave(updatedData) {
     dispatch(updateStudentAsync({ ...updatedData, gpa: parseFloat(updatedData.gpa) || 0 }));
@@ -65,18 +90,13 @@ function StudentTable() {
           </tr>
         </thead>
         <tbody>
-          {allStudents.map((student, index) => (
-            <tr key={student.id} className={student.gpa >= 3.5 ? "high-gpa" : ""}>
-              <td>{index + 1}</td>
-              <td>{student.name}</td>
-              <td>{student.studentId}</td>
-              <td>{student.major}</td>
-              <td className="gpa-cell">{Number(student.gpa).toFixed(2)}</td>
-              <td>
-                <button onClick={() => setEditing(student)}>Edit</button>
-                <button onClick={() => handleDelete(student.id)}>Delete</button>
-              </td>
-            </tr>
+          {studentIds.map((id, index) => (
+            <StudentRow 
+              key={id} 
+              id={id} 
+              index={index} 
+              onEdit={setEditing} 
+            />
           ))}
         </tbody>
       </table>
