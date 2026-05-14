@@ -44,14 +44,40 @@ export const studentsApi = createApi({
     }),
 
     updateStudent: builder.mutation({
-      queryFn: (student) => {
-        mockStudents = mockStudents.map(s => s.id === student.id ? student : s);
-        return { data: student };
+      queryFn: ({ id, ...patch }) => {
+        const index = mockStudents.findIndex(s => s.id === id);
+        if (index !== -1) {
+          mockStudents[index] = { ...mockStudents[index], ...patch };
+          return { data: mockStudents[index] };
+        }
+        return { error: { status: 404, data: 'Not Found' } };
       },
-      invalidatesTags: (result, error, student) => [
-        { type: 'Student', id: student.id },
-        { type: 'Student', id: 'LIST' },
-      ],
+      async onQueryStarted({ id, ...patch }, { dispatch, queryFulfilled }) {
+        const patchList = dispatch(
+          studentsApi.util.updateQueryData(
+            'getStudents', undefined,
+            draft => {
+              const item = draft.find(s => s.id === id);
+              if (item) Object.assign(item, patch);
+            }
+          )
+        );
+        const patchDetail = dispatch(
+          studentsApi.util.updateQueryData(
+            'getStudentById', id,
+            draft => { 
+              if (draft) Object.assign(draft, patch); 
+            }
+          )
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          patchList.undo();
+          patchDetail.undo();
+        }
+      },
+      invalidatesTags: (result, error, { id }) => [{ type: 'Student', id }],
     }),
 
     deleteStudent: builder.mutation({
